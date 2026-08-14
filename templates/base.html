@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swasthya Connect - Community Healthcare Portal</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen">
+
+    <!-- Navigation Header -->
+    <nav class="bg-blue-600 text-white shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center flex-wrap gap-2">
+            <a href="/" data-key="nav_brand" class="text-xl font-bold tracking-wide flex items-center gap-2">
+                🏥 Swasthya Connect
+            </a>
+            
+            <div class="flex items-center gap-4 flex-wrap font-medium text-sm">
+                <a href="/" data-key="nav_home" class="hover:text-blue-200">Home</a>
+                <a href="/directory" data-key="nav_find" class="hover:text-blue-200">Find Healthcare</a>
+                <a href="/appointments" data-key="nav_appts" class="hover:text-blue-200">Appointments</a>
+                <a href="/feedback" data-key="nav_feedback" class="hover:text-blue-200">Awareness & Feedback</a>
+                
+                <!-- Language Selector Dropdown -->
+                <select id="langSwitcher" onchange="switchLanguage(this.value)" class="bg-blue-700 text-white text-xs font-semibold px-2.5 py-1.5 rounded border border-blue-400 focus:outline-none cursor-pointer">
+                    <option value="en">English</option>
+                    <option value="hi">हिन्दी (Hindi)</option>
+                    <option value="mr">मराठी (Marathi)</option>
+                </select>
+
+                {% if session.get('user_name') %}
+                    <span class="bg-blue-800 px-3 py-1 rounded text-xs font-semibold">👤 {{ session['user_name'] }}</span>
+                    <a href="/logout" data-key="nav_logout" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-xs">Logout</a>
+                {% else %}
+                    <a href="/login" data-key="nav_login" class="bg-white text-blue-600 px-3 py-1 rounded text-xs font-bold hover:bg-blue-50">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <div class="max-w-4xl mx-auto px-4 mt-4 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="p-3 rounded mb-3 text-sm font-medium {% if category == 'success' %}bg-green-100 text-green-800 border border-green-300{% elif category == 'danger' %}bg-red-100 text-red-800 border border-red-300{% else %}bg-blue-100 text-blue-800 border border-blue-300{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Page Content -->
+    <main class="flex-grow max-w-6xl mx-auto px-4 py-6 w-full">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 py-6 mt-12 text-center text-sm">
+        <p data-key="footer_title">Swasthya Connect — Community Engagement Project (CEP)</p>
+        <p data-key="footer_sub" class="text-xs text-gray-400 mt-1">Connecting Local Communities to Verified Healthcare Services</p>
+    </footer>
+
+    <!-- Trilingual Translation Engine -->
+    <script>
+    const translations = {
+        en: {
+            "nav_brand": "🏥 Swasthya Connect",
+            "nav_home": "Home",
+            "nav_find": "Find Healthcare",
+            "nav_appts": "Appointments",
+            "nav_feedback": "Awareness & Feedback",
+            "nav_login": "Login",
+            "nav_logout": "Logout",
+            "footer_title": "Swasthya Connect — Community Engagement Project (CEP)",
+            "footer_sub": "Connecting Local Communities to Verified Healthcare Services",
+
+            "hero_title": "Accessible Healthcare for Every Citizen",
+            "hero_sub": "Find verified local health centers, schedule consultation visits, learn about government health schemes, and get quick emergency help.",
+            "card_clinics_title": "Find Clinics",
+            "card_clinics_desc": "Search municipal hospitals, PHCs, and diagnostic labs in your area.",
+            "card_clinics_link": "Search Directory →",
+            "card_appt_title": "Book Visit",
+            "card_appt_desc": "Reserve consultation slots directly without standing in long queues.",
+            "card_appt_link": "Book Slot →",
+            "card_guides_title": "Health Guides",
+            "card_guides_desc": "Preventive healthcare tips and info on government schemes (Ayushman Bharat, MJPJAY).",
+            "card_guides_link": "Read Guides →",
+            "card_emerg_title": "Emergency",
+            "card_emerg_desc": "Immediate helpline contacts: Ambulance (108), Medical Helpline (104).",
+            "btn_call_108": "Call 108",
+
+            "dir_title": "Find Local Healthcare Facilities",
+            "dir_sub": "Filter by facility type or search by area/hospital name.",
+            "dir_search_btn": "Search",
+            "dir_book_btn": "Book Appointment Here",
+            "lbl_area": "Area:",
+            "lbl_contact": "Contact:",
+            "lbl_services": "Services:",
+            "opt_all": "All Types",
+            "opt_hosp": "Hospitals",
+            "opt_phc": "Primary Health Centers (PHC)",
+            "opt_clin": "Clinics",
+            "opt_diag": "Diagnostic Centers",
+            "dir_no_results": "No healthcare facilities found matching your search.",
+
+            "appt_form_title": "Book Consultation Slot",
+            "appt_patient_label": "Patient Full Name",
+            "appt_facility_label": "Select Healthcare Facility",
+            "appt_date_label": "Appointment Date",
+            "appt_submit_btn": "Confirm Booking",
+            "appt_list_title": "Your Scheduled Appointments",
+            "appt_lbl_patient": "Patient:",
+            "appt_lbl_date": "Date:",
+            "appt_cancel_btn": "Cancel",
+            "appt_none": "You have no upcoming appointments booked.",
+
+            "feed_guides_title": "Community Health Guides & Schemes",
+            "feed_form_title": "Community Feedback & Survey",
+            "feed_form_sub": "Tell us about your experience accessing online healthcare resources.",
+            "feed_name_label": "Your Name / Group",
+            "feed_rating_label": "Ease of Finding Healthcare (1 to 5 Stars)",
+            "feed_comment_label": "Feedback / Difficulties Faced",
+            "feed_submit_btn": "Submit Feedback",
+            "feed_recent_title": "Recent Community Input:",
+            "feed_none": "No feedback submitted yet.",
+            "guide_esanj_title": "eSanjeevani Teleconsultation",
+            "guide_esanj_desc": "Government of India's free online doctor consultation service. Connect with certified doctors via video call from home.",
+            "guide_ayush_title": "Ayushman Bharat (PM-JAY) & MJPJAY",
+            "guide_ayush_desc": "Provides health cover up to ₹5 lakh per family per year for secondary and tertiary care hospitalization in empanelled hospitals.",
+            "guide_tips_title": "Basic Preventive Health Tips",
+            "tip_1": "Wash hands regularly with soap for at least 20 seconds.",
+            "tip_2": "Drink clean, boiled, or filtered water to prevent water-borne illnesses.",
+            "tip_3": "Schedule routine blood pressure and sugar screenings at local PHCs.",
+
+            "auth_login_title": "Citizen Login",
+            "auth_reg_title": "Create Citizen Account",
+            "auth_name_label": "Full Name",
+            "auth_phone_label": "10-Digit Mobile Number",
+            "auth_pass_label": "Password",
+            "auth_login_btn": "Login",
+            "auth_reg_btn": "Register Account",
+            "auth_no_acc": "Don't have an account?",
+            "auth_have_acc": "Already have an account?",
+            "auth_reg_here": "Register here",
+            "auth_login_here": "Login here"
+        },
+
+        hi: {
+            "nav_brand": "🏥 स्वास्थ्य कनेक्ट",
+            "nav_home": "होम",
+            "nav_find": "स्वास्थ्य केंद्र खोजें",
+            "nav_appts": "अपॉइंटमेंट",
+            "nav_feedback": "जागरूकता और सुझाव",
+            "nav_login": "लॉग इन",
+            "nav_logout": "लॉग आउट",
+            "footer_title": "स्वास्थ्य कनेक्ट — सामुदायिक सहभागिता परियोजना (CEP)",
+            "footer_sub": "स्थानीय नागरिकों को सत्यापित स्वास्थ्य सेवाओं से जोड़ना",
+
+            "hero_title": "प्रत्येक नागरिक के लिए सुलभ स्वास्थ्य सेवा",
+            "hero_sub": "सत्यापित स्थानीय स्वास्थ्य केंद्र खोजें, परामर्श बुक करें, सरकारी स्वास्थ्य योजनाओं की जानकारी लें और आपातकालीन सहायता प्राप्त करें।",
+            "card_clinics_title": "स्वास्थ्य केंद्र खोजें",
+            "card_clinics_desc": "अपने क्षेत्र में सरकारी अस्पताल, प्राथमिक स्वास्थ्य केंद्र (PHC) और पैथोलॉजी लैब खोजें।",
+            "card_clinics_link": "डायरेक्टरी खोजें →",
+            "card_appt_title": "परामर्श बुक करें",
+            "card_appt_desc": "लंबी कतारों में खड़े बिना सीधे डॉक्टर के पास समय आरक्षित करें।",
+            "card_appt_link": "स्लॉट बुक करें →",
+            "card_guides_title": "स्वास्थ्य गाइड",
+            "card_guides_desc": "रोग रोकथाम के उपाय और सरकारी स्वास्थ्य योजनाओं (आयुष्मान भारत, MJPJAY) की जानकारी।",
+            "card_guides_link": "गाइड पढ़ें →",
+            "card_emerg_title": "आपातकालीन सेवा",
+            "card_emerg_desc": "तत्काल हेल्पलाइन संपर्क: एम्बुलेंस (108), चिकित्सा हेल्पलाइन (104)।",
+            "btn_call_108": "108 पर कॉल करें",
+
+            "dir_title": "स्थानीय स्वास्थ्य सुविधाएं खोजें",
+            "dir_sub": "सुविधा के प्रकार या क्षेत्र/अस्पताल के नाम से खोजें।",
+            "dir_search_btn": "खोजें",
+            "dir_book_btn": "यहाँ अपॉइंटमेंट बुक करें",
+            "lbl_area": "क्षेत्र:",
+            "lbl_contact": "संपर्क:",
+            "lbl_services": "उपलब्ध सेवाएं:",
+            "opt_all": "सभी प्रकार",
+            "opt_hosp": "अस्पताल",
+            "opt_phc": "प्राथमिक स्वास्थ्य केंद्र (PHC)",
+            "opt_clin": "क्लिनिक",
+            "opt_diag": "पैथोलॉजी व जांच केंद्र",
+            "dir_no_results": "आपकी खोज से मेल खाने वाली कोई स्वास्थ्य सुविधा नहीं मिली।",
+
+            "appt_form_title": "परामर्श स्लॉट बुक करें",
+            "appt_patient_label": "मरीज का पूरा नाम",
+            "appt_facility_label": "स्वास्थ्य सुविधा चुनें",
+            "appt_date_label": "अपॉइंटमेंट की तारीख",
+            "appt_submit_btn": "बुकिंग की पुष्टि करें",
+            "appt_list_title": "आपकी निर्धारित नियुक्तियाँ",
+            "appt_lbl_patient": "मरीज:",
+            "appt_lbl_date": "तारीख:",
+            "appt_cancel_btn": "रद्द करें",
+            "appt_none": "आपकी कोई आगामी अपॉइंटमेंट बुक नहीं है।",
+
+            "feed_guides_title": "सामुदायिक स्वास्थ्य गाइड और योजनाएं",
+            "feed_form_title": "सामुदायिक प्रतिक्रिया और सर्वेक्षण",
+            "feed_form_sub": "ऑनलाइन स्वास्थ्य सेवाओं के उपयोग में अपने अनुभव के बारे में बताएं।",
+            "feed_name_label": "आपका नाम / समूह",
+            "feed_rating_label": "स्वास्थ्य सेवा खोजने में सुगमता (1 से 5 स्टार)",
+            "feed_comment_label": "प्रतिक्रिया / आने वाली कठिनाइयाँ",
+            "feed_submit_btn": "प्रतिक्रिया सबमिट करें",
+            "feed_recent_title": "हालिया सामुदायिक सुझाव:",
+            "feed_none": "अभी तक कोई प्रतिक्रिया सबमिट नहीं की गई है।",
+            "guide_esanj_title": "ई-संजीवनी टेलीकंसल्टेशन",
+            "guide_esanj_desc": "भारत सरकार की निःशुल्क ऑनलाइन डॉक्टर परामर्श सेवा। घर बैठे वीडियो कॉल के माध्यम से योग्य डॉक्टरों से संपर्क करें।",
+            "guide_ayush_title": "आयुष्मान भारत (PM-JAY) और MJPJAY",
+            "guide_ayush_desc": "चिह्नित अस्पतालों में गंभीर बीमारियों के इलाज और अस्पताल में भर्ती होने के लिए प्रति वर्ष प्रति परिवार ₹5 लाख तक का स्वास्थ्य कवर।",
+            "guide_tips_title": "बुनियादी स्वास्थ्य सुझाव",
+            "tip_1": "कम से कम 20 सेकंड तक नियमित रूप से साबुन से हाथ धोएं।",
+            "tip_2": "जलजनित बीमारियों से बचने के लिए साफ और उबला हुआ पानी पिएं।",
+            "tip_3": "निकटतम स्वास्थ्य केंद्र में नियमित बीपी और शुगर की जांच करवाएं।",
+
+            "auth_login_title": "नागरिक लॉग इन",
+            "auth_reg_title": "नया नागरिक खाता बनाएं",
+            "auth_name_label": "पूरा नाम",
+            "auth_phone_label": "10-अंकों का मोबाइल नंबर",
+            "auth_pass_label": "पासवर्ड",
+            "auth_login_btn": "लॉग इन",
+            "auth_reg_btn": "खाता बनाएं",
+            "auth_no_acc": "क्या आपका खाता नहीं है?",
+            "auth_have_acc": "क्या आपके पास पहले से खाता है?",
+            "auth_reg_here": "यहाँ रजिस्टर करें",
+            "auth_login_here": "यहाँ लॉग इन करें"
+        },
+
+        mr: {
+            "nav_brand": "🏥 स्वास्थ्य कनेक्ट",
+            "nav_home": "मुख्यपृष्ठ",
+            "nav_find": "आरोग्य केंद्र शोधा",
+            "nav_appts": "अपॉइंटमेंट्स",
+            "nav_feedback": "मार्गदर्शिका व अभिप्राय",
+            "nav_login": "लॉग इन",
+            "nav_logout": "लॉग आउट",
+            "footer_title": "स्वास्थ्य कनेक्ट — समुदाय सहभागिता प्रकल्प (CEP)",
+            "footer_sub": "स्थानिक नागरिकांना अधिकृत आरोग्य सेवांशी जोडणारा उपक्रम",
+
+            "hero_title": "प्रत्येक नागरिकासाठी सुलभ आरोग्य सेवा",
+            "hero_sub": "सत्यापित स्थानिक आरोग्य केंद्रे शोधा, डॉक्टरांच्या भेटीची वेळ निश्चित करा, शासकीय योजनांची माहिती मिळवा आणि आपत्कालीन मदत मिळवा.",
+            "card_clinics_title": "दवाखाने / रुग्णालये शोधा",
+            "card_clinics_desc": "आपल्या परिसरातील सरकारी रुग्णालये, प्राथमिक आरोग्य केंद्रे (PHC) आणि तपासणी लॅब शोधा.",
+            "card_clinics_link": "डायरेक्टरी शोधा →",
+            "card_appt_title": "अपॉइंटमेंट बुक करा",
+            "card_appt_desc": "लांब रांगेत उभे न राहता थेट तपासणीसाठी वेळ आरक्षित करा.",
+            "card_appt_link": "वेळ निश्चित करा →",
+            "card_guides_title": "आरोग्य मार्गदर्शिका",
+            "card_guides_desc": "रोग प्रतिबंधक उपाय आणि शासकीय आरोग्य योजना (आयुष्मान भारत, म.जो.फु. जन आरोग्य योजना) यांविषयी माहिती.",
+            "card_guides_link": "माहिती वाचा →",
+            "card_emerg_title": "तातडीची / आणीबाणी सेवा",
+            "card_emerg_desc": "तातडीचे संपर्क क्रमांक: रुग्णवाहिका (१०८), वैद्यकीय हेल्पलाइन (१०४).",
+            "btn_call_108": "१०८ वर कॉल करा",
+
+            "dir_title": "स्थानिक आरोग्य सुविधा शोधा",
+            "dir_sub": "केंद्राचा प्रकार किंवा परिसर/रुग्णालयाच्या नावाने शोधा.",
+            "dir_search_btn": "शोधा",
+            "dir_book_btn": "येथे वेळ निश्चित करा",
+            "lbl_area": "परिसर:",
+            "lbl_contact": "संपर्क क्रमांक:",
+            "lbl_services": "उपलब्ध सेवा:",
+            "opt_all": "सर्व प्रकार",
+            "opt_hosp": "रुग्णालये (Hospitals)",
+            "opt_phc": "प्राथमिक आरोग्य केंद्रे (PHC)",
+            "opt_clin": "दवाखाने / क्लिनिक",
+            "opt_diag": "तपासणी व पॅथॉलॉजी लॅब",
+            "dir_no_results": "आपल्या शोधाशी जुळणारी कोणतीही आरोग्य सुविधा आढळली नाही.",
+
+            "appt_form_title": "तपासणीसाठी वेळ बुक करा",
+            "appt_patient_label": "रुग्णाचे पूर्ण नाव",
+            "appt_facility_label": "आरोग्य केंद्र निवडा",
+            "appt_date_label": "भेटीची तारीख",
+            "appt_submit_btn": "बुकिंग निश्चित करा",
+            "appt_list_title": "तुमच्या आरक्षित अपॉइंटमेंट्स",
+            "appt_lbl_patient": "रुग्ण:",
+            "appt_lbl_date": "तारीख:",
+            "appt_cancel_btn": "रद्द करा",
+            "appt_none": "तुमची कोणतीही आगामी अपॉइंटमेंट नोंदवलेली नाही.",
+
+            "feed_guides_title": "आरोग्य मार्गदर्शिका व शासकीय योजना",
+            "feed_form_title": "नागरिक अभिप्राय आणि सर्वेक्षण",
+            "feed_form_sub": "ऑनलाइन आरोग्य सेवा वापरताना आलेले अनुभव आणि अडचणी सांगा.",
+            "feed_name_label": "आपले नाव / गट",
+            "feed_rating_label": "आरोग्य सेवा शोधणे किती सोपे गेले? (१ ते ५ स्टार)",
+            "feed_comment_label": "अभिप्राय / जाणवलेल्या अडचणी",
+            "feed_submit_btn": "अभिप्राय पाठवा",
+            "feed_recent_title": "नागरिकांचे नुकतेच आलेले अभिप्राय:",
+            "feed_none": "अद्याप कोणताही अभिप्राय प्राप्त झालेला नाही.",
+            "guide_esanj_title": "ई-संजीवनी टेलीकन्सल्टेशन",
+            "guide_esanj_desc": "भारत सरकारची मोफत ऑनलाइन डॉक्टर तपासणी सेवा. घरी बसून व्हिडिओ कॉलद्वारे तज्ज्ञ डॉक्टरांचा सल्ला घ्या.",
+            "guide_ayush_title": "आयुष्मान भारत व म.जो.फु. जन आरोग्य योजना",
+            "guide_ayush_desc": "अधिकृत रुग्णालयांमध्ये मोफत उपचारांसाठी प्रति कुटुंब दरवर्षी ₹५ लाखांपर्यंतचे आरोग्य संरक्षण.",
+            "guide_tips_title": "आरोग्यदायी जीवनशैलीच्या टिप्स",
+            "tip_1": "जेवणापूर्वी किमान २० सेकंद हात स्वच्छ धुवा.",
+            "tip_2": "पावसाळ्यात व दूषित पाण्यापासून बचाव करण्यासाठी पाणी उकळून प्या.",
+            "tip_3": "जवळच्या प्राथमिक आरोग्य केंद्रात वेळोवेळी रक्तदाब (BP) व साखरेची तपासणी करा.",
+
+            "auth_login_title": "नागरिक लॉग इन",
+            "auth_reg_title": "नवीन नागरिक खाते तयार करा",
+            "auth_name_label": "पूर्ण नाव",
+            "auth_phone_label": "१०-अंकी मोबाईल नंबर",
+            "auth_pass_label": "पासवर्ड",
+            "auth_login_btn": "लॉग इन करा",
+            "auth_reg_btn": "खाते तयार करा",
+            "auth_no_acc": "खाते नाही का?",
+            "auth_have_acc": "आधीच खाते आहे का?",
+            "auth_reg_here": "येथे नोंदणी करा",
+            "auth_login_here": "येथे लॉग इन करा"
+        }
+    };
+
+    function switchLanguage(lang) {
+        localStorage.setItem('preferredLang', lang);
+
+        document.querySelectorAll('[data-key]').forEach(elem => {
+            const key = elem.getAttribute('data-key');
+            if (translations[lang] && translations[lang][key]) {
+                elem.innerText = translations[lang][key];
+            }
+        });
+
+        const switcher = document.getElementById('langSwitcher');
+        if (switcher) switcher.value = lang;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedLang = localStorage.getItem('preferredLang') || 'en';
+        switchLanguage(savedLang);
+    });
+    </script>
+</body>
+</html>

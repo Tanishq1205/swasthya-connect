@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-8">
+    <h1 data-key="dir_title" class="text-2xl font-bold text-gray-900 mb-2">Find Local Healthcare Facilities</h1>
+    <p data-key="dir_sub" class="text-sm text-gray-600 mb-6">Filter by facility type or search by area/hospital name.</p>
+
+    <!-- Search & Filter Bar -->
+    <form method="GET" action="/directory" class="bg-white p-4 rounded-lg shadow-sm border flex flex-col sm:flex-row gap-3">
+        <input type="text" name="search" value="{{ search_query }}" placeholder="Search by area (e.g. Chembur, Kurla)..." class="flex-grow border rounded px-3 py-2 text-sm focus:outline-blue-500">
+        
+        <select name="type" class="border rounded px-3 py-2 text-sm focus:outline-blue-500">
+            <option data-key="opt_all" value="All" {% if selected_type == 'All' %}selected{% endif %}>All Types</option>
+            <option data-key="opt_hosp" value="Hospital" {% if selected_type == 'Hospital' %}selected{% endif %}>Hospitals</option>
+            <option data-key="opt_phc" value="PHC" {% if selected_type == 'PHC' %}selected{% endif %}>Primary Health Centers (PHC)</option>
+            <option data-key="opt_clin" value="Clinic" {% if selected_type == 'Clinic' %}selected{% endif %}>Clinics</option>
+            <option data-key="opt_diag" value="Diagnostic Center" {% if selected_type == 'Diagnostic Center' %}selected{% endif %}>Diagnostic Centers</option>
+        </select>
+
+        <button type="submit" data-key="dir_search_btn" class="bg-blue-600 text-white font-semibold px-5 py-2 rounded text-sm hover:bg-blue-700">Search</button>
+    </form>
+</div>
+
+<!-- Facilities Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {% for f in facilities %}
+    <div class="bg-white p-5 rounded-lg border shadow-sm flex flex-col justify-between">
+        <div>
+            <div class="flex justify-between items-start mb-2">
+                <h2 class="text-lg font-bold text-gray-900">{{ f['name'] }}</h2>
+                <span class="bg-blue-100 text-blue-800 text-xs px-2.5 py-0.5 rounded font-semibold">{{ f['facility_type'] }}</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-1"><strong data-key="lbl_area">Area:</strong> {{ f['area'] }}</p>
+            <p class="text-sm text-gray-600 mb-1"><strong data-key="lbl_contact">Contact:</strong> {{ f['contact'] }}</p>
+            <p class="text-sm text-gray-600 mb-4"><strong data-key="lbl_services">Services:</strong> {{ f['services'] }}</p>
+        </div>
+        <a href="/appointments" data-key="dir_book_btn" class="block text-center bg-gray-100 hover:bg-blue-50 text-blue-600 text-sm font-semibold py-2 rounded border border-blue-200">
+            Book Appointment Here
+        </a>
+    </div>
+    {% else %}
+    <div class="col-span-2 text-center py-10 bg-white rounded border">
+        <p data-key="dir_no_results" class="text-gray-500 text-sm">No healthcare facilities found matching your search.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

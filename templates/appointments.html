@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Booking Form -->
+    <div class="bg-white p-6 rounded-lg border shadow-sm h-fit">
+        <h2 data-key="appt_form_title" class="text-xl font-bold text-gray-900 mb-4">Book Consultation Slot</h2>
+        <form method="POST" action="/appointments" class="space-y-4">
+            <div>
+                <label data-key="appt_patient_label" class="block text-xs font-semibold text-gray-700 uppercase mb-1">Patient Full Name</label>
+                <input type="text" name="patient_name" required class="w-full border rounded px-3 py-2 text-sm focus:outline-blue-500" placeholder="Enter patient name">
+            </div>
+            <div>
+                <label data-key="appt_facility_label" class="block text-xs font-semibold text-gray-700 uppercase mb-1">Select Healthcare Facility</label>
+                <select name="facility_id" required class="w-full border rounded px-3 py-2 text-sm focus:outline-blue-500">
+                    {% for fac in facilities %}
+                        <option value="{{ fac['id'] }}">{{ fac['name'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label data-key="appt_date_label" class="block text-xs font-semibold text-gray-700 uppercase mb-1">Appointment Date</label>
+                <input type="date" name="appointment_date" required class="w-full border rounded px-3 py-2 text-sm focus:outline-blue-500">
+            </div>
+            <button type="submit" data-key="appt_submit_btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded text-sm transition">
+                Confirm Booking
+            </button>
+        </form>
+    </div>
+
+    <!-- Scheduled Appointments List -->
+    <div class="lg:col-span-2 bg-white p-6 rounded-lg border shadow-sm">
+        <h2 data-key="appt_list_title" class="text-xl font-bold text-gray-900 mb-4">Your Scheduled Appointments</h2>
+        <div class="space-y-4">
+            {% for appt in appointments %}
+            <div class="border p-4 rounded-md flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-gray-800">{{ appt['facility_name'] }}</h3>
+                    <p class="text-sm text-gray-600"><span data-key="appt_lbl_patient">Patient:</span> <strong>{{ appt['patient_name'] }}</strong></p>
+                    <p class="text-xs text-gray-500"><span data-key="appt_lbl_date">Date:</span> {{ appt['appointment_date'] }}</p>
+                    <span class="inline-block mt-2 text-xs font-semibold px-2 py-0.5 rounded {% if appt['status'] == 'Confirmed' %}bg-green-100 text-green-800{% else %}bg-gray-200 text-gray-700{% endif %}">
+                        {{ appt['status'] }}
+                    </span>
+                </div>
+                {% if appt['status'] == 'Confirmed' %}
+                <form method="POST" action="/cancel-appointment/{{ appt['id'] }}">
+                    <button type="submit" data-key="appt_cancel_btn" class="text-xs text-red-600 hover:text-red-800 font-semibold border border-red-200 px-3 py-1 rounded">Cancel</button>
+                </form>
+                {% endif %}
+            </div>
+            {% else %}
+            <p data-key="appt_none" class="text-sm text-gray-500">You have no upcoming appointments booked.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
