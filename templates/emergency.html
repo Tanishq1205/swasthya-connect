@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-xl mx-auto bg-gray-900 text-white p-6 sm:p-8 rounded-2xl shadow-2xl border-2 border-red-600 my-4">
+    
+    <!-- Header -->
+    <div class="text-center mb-6">
+        <span class="inline-block bg-red-600 text-white text-xs font-black uppercase px-3 py-1 rounded-full animate-pulse tracking-widest mb-2">
+            🚨 Active Emergency Mode
+        </span>
+        <h1 data-key="em_title" class="text-2xl sm:text-3xl font-extrabold text-white">
+            Need Immediate Assistance?
+        </h1>
+        <p data-key="em_sub" class="text-xs sm:text-sm text-gray-300 mt-1">
+            Fast one-touch actions for medical emergencies.
+        </p>
+    </div>
+
+    <!-- PRIMARY RESCUE BUTTON: Call 108 Ambulance -->
+    <a href="tel:108" class="block w-full bg-red-600 hover:bg-red-700 active:scale-95 transition text-center py-4 rounded-xl text-xl sm:text-2xl font-black shadow-lg mb-4 flex items-center justify-center gap-3">
+        <span>🚑</span>
+        <span data-key="em_btn_108">CALL AMBULANCE (108)</span>
+    </a>
+
+    <!-- Action Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+        
+        <!-- Call National Helpline (112) -->
+        <a href="tel:112" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 p-4 rounded-xl flex items-center gap-3">
+            <span class="text-2xl">📞</span>
+            <div class="text-left">
+                <div data-key="em_call_112_title" class="font-bold text-sm">Emergency (112)</div>
+                <div data-key="em_call_112_sub" class="text-xs text-gray-400">All-in-one helpline</div>
+            </div>
+        </a>
+
+        <!-- Find Nearby Hospitals Directly -->
+        <a href="/directory?type=Hospital" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 p-4 rounded-xl flex items-center gap-3">
+            <span class="text-2xl">🏥</span>
+            <div class="text-left">
+                <div data-key="em_find_hosp_title" class="font-bold text-sm">Nearest Hospitals</div>
+                <div data-key="em_find_hosp_sub" class="text-xs text-gray-400">View 24x7 centers</div>
+            </div>
+        </a>
+
+        <!-- Share Live GPS Location via WhatsApp / SMS -->
+        <button onclick="shareEmergencyLocation()" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 p-4 rounded-xl flex items-center gap-3 text-left w-full">
+            <span class="text-2xl">📍</span>
+            <div>
+                <div data-key="em_share_loc_title" class="font-bold text-sm">Share GPS Location</div>
+                <div data-key="em_share_loc_sub" class="text-xs text-gray-400" id="locStatus">Send map link to family</div>
+            </div>
+        </button>
+
+        <!-- Call Saved Emergency Contact -->
+        {% if profile and profile['emergency_contact_phone'] %}
+        <a href="tel:{{ profile['emergency_contact_phone'] }}" class="bg-amber-600 hover:bg-amber-700 p-4 rounded-xl flex items-center gap-3">
+            <span class="text-2xl">👨‍👩‍👧</span>
+            <div class="text-left">
+                <div class="font-bold text-sm">Call {{ profile['emergency_contact_name'] }}</div>
+                <div class="text-xs text-amber-100">{{ profile['emergency_contact_phone'] }}</div>
+            </div>
+        </a>
+        {% else %}
+        <a href="/emergency-profile" class="bg-gray-800 hover:bg-gray-700 border border-dashed border-gray-600 p-4 rounded-xl flex items-center gap-3">
+            <span class="text-2xl">➕</span>
+            <div class="text-left">
+                <div data-key="em_add_contact_title" class="font-bold text-sm">Add Contact</div>
+                <div data-key="em_add_contact_sub" class="text-xs text-gray-400">Set family SOS number</div>
+            </div>
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Emergency Medical Profile Card -->
+    <div class="bg-gray-800 border border-gray-700 rounded-xl p-4 mb-6">
+        <div class="flex justify-between items-center mb-2">
+            <h3 data-key="em_profile_title" class="font-bold text-sm flex items-center gap-2 text-red-400">
+                <span>📋</span> Emergency Medical Summary
+            </h3>
+            <a href="/emergency-profile" class="text-xs text-blue-400 hover:underline">Edit</a>
+        </div>
+        
+        {% if profile %}
+        <div class="grid grid-cols-2 gap-2 text-xs text-gray-300">
+            <div><strong>Blood Group:</strong> <span class="text-white">{{ profile['blood_group'] or 'Not provided' }}</span></div>
+            <div><strong>Contact:</strong> <span class="text-white">{{ profile['emergency_contact_name'] or 'None' }}</span></div>
+            <div class="col-span-2"><strong>Allergies:</strong> <span class="text-white">{{ profile['allergies'] or 'None listed' }}</span></div>
+            <div class="col-span-2"><strong>Medications:</strong> <span class="text-white">{{ profile['medications'] or 'None listed' }}</span></div>
+        </div>
+        {% else %}
+        <p data-key="em_profile_empty" class="text-xs text-gray-400">
+            No medical summary saved. <a href="/emergency-profile" class="text-blue-400 underline">Set up your Emergency Profile</a> for first responders.
+        </p>
+        {% endif %}
+    </div>
+
+    <!-- "I'M SAFE" Exit Button -->
+    <div class="text-center pt-2">
+        <a href="/" class="inline-block bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-bold py-2.5 px-6 rounded-lg transition">
+            ✓ <span data-key="em_safe_btn">I'm Safe — Exit Emergency Mode</span>
+        </a>
+    </div>
+</div>
+
+<!-- Location Script -->
+<script>
+function shareEmergencyLocation() {
+    const statusEl = document.getElementById('locStatus');
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+    }
+    statusEl.innerText = "Fetching coordinates...";
+    
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const mapsUrl = `https://maps.google.com/?q=${lat},${lon}`;
+            const message = encodeURIComponent(`🚨 EMERGENCY! I need urgent assistance. My current location is: ${mapsUrl}`);
+            
+            // Open WhatsApp with pre-filled SOS location message
+            window.open(`https://api.whatsapp.com/send?text=${message}`, '_blank');
+            statusEl.innerText = "Location shared via link!";
+        },
+        (error) => {
+            alert("Unable to retrieve your location. Please check location permissions.");
+            statusEl.innerText = "Location permission denied";
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+</script>
+{% endblock %}

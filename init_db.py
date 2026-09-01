@@ -52,6 +52,21 @@ def init_db():
     )
     ''')
 
+    # 5. Emergency Profiles Table (Optional Profile per User)
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS emergency_profiles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER UNIQUE,
+        emergency_contact_name TEXT,
+        emergency_contact_phone TEXT,
+        blood_group TEXT,
+        allergies TEXT,
+        medications TEXT,
+        medical_notes TEXT,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+    ''')
+
     # Seed Sample Facilities
     cursor.execute('DELETE FROM facilities')
     sample_facilities = [

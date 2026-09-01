@@ -146,5 +146,53 @@ def feedback():
     conn.close()
     return render_template('feedback.html', feedbacks=all_feedback)
 
+# ----------------- EMERGENCY ASSIST ROUTES -----------------
+@app.route('/emergency')
+def emergency():
+    user_profile = None
+    if 'user_id' in session:
+        conn = get_db()
+        user_profile = conn.execute(
+            'SELECT * FROM emergency_profiles WHERE user_id = ?', 
+            (session['user_id'],)
+        ).fetchone()
+        conn.close()
+    return render_template('emergency.html', profile=user_profile)
+
+@app.route('/emergency-profile', methods=['GET', 'POST'])
+def emergency_profile():
+    if 'user_id' not in session:
+        flash('Please log in to set up your Emergency Profile.', 'warning')
+        return redirect(url_for('login'))
+
+    conn = get_db()
+    if request.method == 'POST':
+        contact_name = request.form.get('emergency_contact_name', '').strip()
+        contact_phone = request.form.get('emergency_contact_phone', '').strip()
+        blood_group = request.form.get('blood_group', '').strip()
+        allergies = request.form.get('allergies', '').strip()
+        medications = request.form.get('medications', '').strip()
+        medical_notes = request.form.get('medical_notes', '').strip()
+
+        conn.execute('''
+            INSERT INTO emergency_profiles (user_id, emergency_contact_name, emergency_contact_phone, blood_group, allergies, medications, medical_notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                emergency_contact_name=excluded.emergency_contact_name,
+                emergency_contact_phone=excluded.emergency_contact_phone,
+                blood_group=excluded.blood_group,
+                allergies=excluded.allergies,
+                medications=excluded.medications,
+                medical_notes=excluded.medical_notes
+        ''', (session['user_id'], contact_name, contact_phone, blood_group, allergies, medications, medical_notes))
+        conn.commit()
+        conn.close()
+        flash('Emergency Profile updated successfully!', 'success')
+        return redirect(url_for('emergency'))
+
+    profile = conn.execute('SELECT * FROM emergency_profiles WHERE user_id = ?', (session['user_id'],)).fetchone()
+    conn.close()
+    return render_template('emergency_profile_edit.html', profile=profile)
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
