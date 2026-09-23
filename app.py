@@ -1,6 +1,22 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import sqlite3
 
+import math
+
+def haversine_distance(lat1, lon1, lat2, lon2):
+    """
+    Calculates the distance in kilometers between two GPS coordinates
+    using the Haversine formula.
+    """
+    R = 6371.0  # Earth's radius in kilometers
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (math.sin(dlat / 2) ** 2 +
+         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+         math.sin(dlon / 2) ** 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return round(R * c, 2)
+
 app = Flask(__name__)
 app.secret_key = 'swasthya_community_secret_key_2026'
 
@@ -65,6 +81,8 @@ def logout():
 def directory():
     search_query = request.args.get('search', '').strip()
     facility_type = request.args.get('type', '').strip()
+    user_lat = request.args.get('lat', type=float)
+    user_lon = request.args.get('lon', type=float)
 
     conn = get_db()
     query = "SELECT * FROM facilities WHERE 1=1"
@@ -78,9 +96,30 @@ def directory():
         query += " AND facility_type = ?"
         params.append(facility_type)
 
-    facilities = conn.execute(query, params).fetchall()
+    raw_facilities = conn.execute(query, params).fetchall()
     conn.close()
-    return render_template('directory.html', facilities=facilities, search_query=search_query, selected_type=facility_type)
+
+    # Convert SQLite Rows to regular dictionaries so we can attach distance
+    facilities = [dict(f) for f in raw_facilities]
+
+    # If user coordinates are provided, calculate distance and sort
+    has_location = False
+    if user_lat is not None and user_lon is not None:
+        has_location = True
+        for f in facilities:
+            if f['latitude'] and f['longitude']:
+                f['distance'] = haversine_distance(user_lat, user_lon, f['latitude'], f['longitude'])
+            else:
+                f['distance'] = 9999.0  # fallback for entries without coordinates
+
+        # Sort ascending: closest first
+        facilities.sort(key=lambda x: x['distance'])
+
+    return render_template('directory.html', 
+                           facilities=facilities, 
+                           search_query=search_query, 
+                           selected_type=facility_type,
+                           has_location=has_location)
 
 # ----------------- MODULE 3: APPOINTMENT BOOKING -----------------
 @app.route('/appointments', methods=['GET', 'POST'])

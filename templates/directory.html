@@ -1,46 +1,254 @@
 {% extends 'base.html' %}
+
 {% block content %}
-<div class="mb-8">
-    <h1 data-key="dir_title" class="text-2xl font-bold text-gray-900 mb-2">Find Local Healthcare Facilities</h1>
-    <p data-key="dir_sub" class="text-sm text-gray-600 mb-6">Filter by facility type or search by area/hospital name.</p>
+<div class="max-w-6xl mx-auto px-4 py-6">
 
-    <!-- Search & Filter Bar -->
-    <form method="GET" action="/directory" class="bg-white p-4 rounded-lg shadow-sm border flex flex-col sm:flex-row gap-3">
-        <input type="text" name="search" value="{{ search_query }}" placeholder="Search by area (e.g. Chembur, Kurla)..." class="flex-grow border rounded px-3 py-2 text-sm focus:outline-blue-500">
-        
-        <select name="type" class="border rounded px-3 py-2 text-sm focus:outline-blue-500">
-            <option data-key="opt_all" value="All" {% if selected_type == 'All' %}selected{% endif %}>All Types</option>
-            <option data-key="opt_hosp" value="Hospital" {% if selected_type == 'Hospital' %}selected{% endif %}>Hospitals</option>
-            <option data-key="opt_phc" value="PHC" {% if selected_type == 'PHC' %}selected{% endif %}>Primary Health Centers (PHC)</option>
-            <option data-key="opt_clin" value="Clinic" {% if selected_type == 'Clinic' %}selected{% endif %}>Clinics</option>
-            <option data-key="opt_diag" value="Diagnostic Center" {% if selected_type == 'Diagnostic Center' %}selected{% endif %}>Diagnostic Centers</option>
-        </select>
+    <!-- Header Section -->
+    <div class="mb-8 text-center md:text-left">
+        <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight" data-key="dir_title">
+            Healthcare Directory
+        </h1>
+        <p class="text-sm text-gray-600 mt-1" data-key="dir_subtitle">
+            Find verified municipal hospitals, primary health centers (PHCs), dispensaries, and diagnostic labs across your area.
+        </p>
+    </div>
 
-        <button type="submit" data-key="dir_search_btn" class="bg-blue-600 text-white font-semibold px-5 py-2 rounded text-sm hover:bg-blue-700">Search</button>
-    </form>
-</div>
-
-<!-- Facilities Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    {% for f in facilities %}
-    <div class="bg-white p-5 rounded-lg border shadow-sm flex flex-col justify-between">
-        <div>
-            <div class="flex justify-between items-start mb-2">
-                <h2 class="text-lg font-bold text-gray-900">{{ f['name'] }}</h2>
-                <span class="bg-blue-100 text-blue-800 text-xs px-2.5 py-0.5 rounded font-semibold">{{ f['facility_type'] }}</span>
+    <!-- Proximity & Geolocation Bar -->
+    <div class="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-600 text-white p-3 rounded-xl text-xl shadow-sm">
+                📍
             </div>
-            <p class="text-sm text-gray-600 mb-1"><strong data-key="lbl_area">Area:</strong> {{ f['area'] }}</p>
-            <p class="text-sm text-gray-600 mb-1"><strong data-key="lbl_contact">Contact:</strong> {{ f['contact'] }}</p>
-            <p class="text-sm text-gray-600 mb-4"><strong data-key="lbl_services">Services:</strong> {{ f['services'] }}</p>
+            <div>
+                <h3 class="text-sm font-bold text-gray-900">Sort by Proximity</h3>
+                <p class="text-xs text-gray-600">
+                    Enable device location to rank hospitals from closest to farthest.
+                </p>
+            </div>
         </div>
-        <a href="/appointments" data-key="dir_book_btn" class="block text-center bg-gray-100 hover:bg-blue-50 text-blue-600 text-sm font-semibold py-2 rounded border border-blue-200">
-            Book Appointment Here
+        <div class="flex items-center gap-2 w-full md:w-auto">
+            <button type="button" onclick="getUserLocation()" id="loc-btn"
+                class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow transition-all flex items-center justify-center gap-2">
+                <span>🛰️</span>
+                <span id="loc-btn-text">Find Closest to Me</span>
+            </button>
+
+            {% if has_location %}
+            <button type="button" onclick="clearLocation()" 
+                class="text-xs bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 px-3 py-2.5 rounded-xl font-medium transition-colors"
+                title="Reset location sorting">
+                ✕ Reset
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <form method="GET" action="/directory" id="filter-form" class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm mb-8">
+        <!-- Preserve Geolocation in Search Filters if active -->
+        <input type="hidden" name="lat" id="hidden-lat" value="{{ request.args.get('lat', '') }}">
+        <input type="hidden" name="lon" id="hidden-lon" value="{{ request.args.get('lon', '') }}">
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+            <!-- Keyword Search Input -->
+            <div class="md:col-span-6 relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔍</span>
+                <input type="text" name="search" value="{{ search_query }}" 
+                    placeholder="Search by hospital name or area (e.g. Chembur, Kurla)..."
+                    class="w-full pl-9 pr-4 py-2.5 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+            </div>
+
+            <!-- Facility Category Selector -->
+            <div class="md:col-span-4">
+                <select name="type" 
+                    class="w-full py-2.5 px-3 text-xs rounded-xl border border-gray-300 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                    <option value="All" {% if selected_type == 'All' or not selected_type %}selected{% endif %}>All Facility Types</option>
+                    <option value="Hospital" {% if selected_type == 'Hospital' %}selected{% endif %}>Hospitals</option>
+                    <option value="PHC" {% if selected_type == 'PHC' %}selected{% endif %}>Primary Health Centers (PHCs)</option>
+                    <option value="Clinic" {% if selected_type == 'Clinic' %}selected{% endif %}>Dispensaries & Clinics</option>
+                    <option value="Diagnostic Center" {% if selected_type == 'Diagnostic Center' %}selected{% endif %}>Diagnostic Centers</option>
+                </select>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="md:col-span-2 flex gap-2">
+                <button type="submit" 
+                    class="flex-1 bg-gray-900 hover:bg-black text-white text-xs font-semibold py-2.5 px-3 rounded-xl transition-colors">
+                    Filter
+                </button>
+                <a href="/directory" 
+                    class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-3 rounded-xl transition-colors text-center flex items-center justify-center">
+                    Clear
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Results Count -->
+    <div class="mb-4 flex items-center justify-between text-xs text-gray-500">
+        <span>Showing <strong>{{ facilities|length }}</strong> registered facilities</span>
+        {% if has_location %}
+        <span class="text-emerald-700 font-semibold flex items-center gap-1">
+            <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Sorted by shortest distance from your coordinates
+        </span>
+        {% endif %}
+    </div>
+
+    <!-- Facility Cards Grid -->
+    {% if facilities %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for f in facilities %}
+        <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between relative group">
+            
+            <div>
+                <!-- Top Badges Row -->
+                <div class="flex items-center justify-between gap-2 mb-3">
+                    <!-- Facility Type Badge -->
+                    <span class="text-[11px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider
+                        {% if f['facility_type'] == 'Hospital' %}
+                            bg-blue-100 text-blue-800 border border-blue-200
+                        {% elif f['facility_type'] == 'PHC' %}
+                            bg-emerald-100 text-emerald-800 border border-emerald-200
+                        {% elif f['facility_type'] == 'Diagnostic Center' %}
+                            bg-amber-100 text-amber-800 border border-amber-200
+                        {% else %}
+                            bg-purple-100 text-purple-800 border border-purple-200
+                        {% endif %}">
+                        {{ f['facility_type'] }}
+                    </span>
+
+                    <!-- Haversine Proximity Badge -->
+                    {% if f.distance is defined and f.distance != 9999.0 %}
+                    <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold px-2.5 py-1 rounded-full">
+                        <span>📍</span> {{ f.distance }} km
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Facility Header -->
+                <h3 class="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-1">
+                    {{ f['name'] }}
+                </h3>
+                <p class="text-xs font-medium text-gray-500 mb-3 flex items-center gap-1">
+                    <span>🏢</span> {{ f['area'] }}, Mumbai
+                </p>
+
+                <!-- Medical Services Offered -->
+                <div class="bg-gray-50 rounded-xl p-3 mb-4 border border-gray-100">
+                    <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1">
+                        Available Services
+                    </span>
+                    <p class="text-xs text-gray-700 leading-relaxed">
+                        {{ f['services'] }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Card Actions -->
+            <div class="border-t border-gray-100 pt-4 flex items-center justify-between gap-2">
+                <a href="tel:{{ f['contact'] }}" 
+                    class="text-xs text-gray-700 hover:text-blue-600 font-semibold flex items-center gap-1.5 transition-colors py-1.5 px-2 rounded-lg hover:bg-gray-50">
+                    <span>📞</span>
+                    <span>{{ f['contact'] }}</span>
+                </a>
+
+                <a href="/appointments?facility_id={{ f['id'] }}" 
+                    class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition-all shadow-sm flex items-center gap-1">
+                    <span>Book Visit</span>
+                    <span>→</span>
+                </a>
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white border border-gray-200 rounded-2xl p-12 text-center max-w-lg mx-auto shadow-sm my-8">
+        <div class="text-4xl mb-3">🏥</div>
+        <h3 class="text-base font-bold text-gray-800 mb-1">No healthcare facilities found</h3>
+        <p class="text-xs text-gray-500 mb-6">
+            We couldn't find any clinic or hospital matching your selected search query or area.
+        </p>
+        <a href="/directory" class="inline-block bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors">
+            Reset Filters
         </a>
     </div>
-    {% else %}
-    <div class="col-span-2 text-center py-10 bg-white rounded border">
-        <p data-key="dir_no_results" class="text-gray-500 text-sm">No healthcare facilities found matching your search.</p>
-    </div>
-    {% endfor %}
+    {% endif %}
+
 </div>
+
+<!-- Client-side Geolocation Handler -->
+<script>
+function getUserLocation() {
+    const btn = document.getElementById('loc-btn');
+    const btnText = document.getElementById('loc-btn-text');
+
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+    }
+
+    btnText.innerText = "Requesting Access...";
+    btn.disabled = true;
+
+    navigator.geolocation.getCurrentPosition(
+        function (position) {
+            btnText.innerText = "Calculating Distances...";
+            
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+
+            // Preserve current search and category queries while attaching GPS coordinates
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('lat', lat);
+            currentUrl.searchParams.set('lon', lon);
+            
+            window.location.href = currentUrl.href;
+        },
+        function (error) {
+            btn.disabled = false;
+            btnText.innerText = "Find Closest to Me";
+
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("Location access was denied. Please allow location permissions in your browser address bar.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Location information is currently unavailable.");
+                    break;
+                case error.TIMEOUT:
+                    alert("The request to fetch your location timed out. Please try again.");
+                    break;
+                default:
+                    alert("An unknown error occurred while retrieving location.");
+            }
+        },
+        { timeout: 12000, enableHighAccuracy: true }
+    );
+}
+
+function clearLocation() {
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.delete('lat');
+    currentUrl.searchParams.delete('lon');
+    window.location.href = currentUrl.href;
+}
+
+// Visual update if location parameters already exist in URL
+window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('lat') && params.has('lon')) {
+        const btn = document.getElementById('loc-btn');
+        const btnText = document.getElementById('loc-btn-text');
+        if (btn && btnText) {
+            btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+            btnText.innerText = "Sorted by Distance ✓";
+        }
+    }
+});
+</script>
 {% endblock %}
