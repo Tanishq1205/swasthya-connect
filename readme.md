@@ -2,7 +2,27 @@
 
 A trilingual (English, हिन्दी, मराठी), responsive public healthcare platform built to connect local citizens with municipal hospitals, primary health centers (PHCs), diagnostic labs, and emergency triage services.
 
-🌐 **Live Application:** [swasthya-connect.onrender.com](https://swasthya-connect.onrender.com)
+## Live Demo & Deployment
+
+[![Vercel Deployment](https://img.shields.io/badge/Deployed%20with-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://swasthya-connect-henna.vercel.app)
+
+* **Production URL:** [https://swasthya-connect-henna.vercel.app](https://swasthya-connect-henna.vercel.app)
+* **Hosting Platform:** Vercel (Serverless Python Runtime)
+* **CI/CD:** Automatic builds triggered on push to `main`
+
+### Deployment Details
+
+* **Entry Point:** Handled via `/api/index.py` exposing the Flask WSGI application instance.
+* **Routing Configuration (`vercel.json`):**
+  ```json
+  {
+    "rewrites": [
+      {
+        "source": "/(.*)",
+        "destination": "/api/index.py"
+      }
+    ]
+  }
 
 ---
 
